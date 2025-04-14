@@ -37,7 +37,7 @@ public class LoginController {
         Usuario usuarioLogado = this.ur.login(usuario.getEmail(), usuario.getSenha());
 
         if (usuarioLogado != null) {
-            return "redirect:/";
+            return "redirect:/index";
         }
 
         model.addAttribute("erro", "Usuário Inválido!");
