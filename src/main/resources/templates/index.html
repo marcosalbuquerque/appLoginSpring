@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDoList - Albuquerque</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+</head>
+<style>
+    /* Geral */
+
+* {
+    padding: 0;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: rgb(21, 9, 38);
+}
+
+button {
+    background-color: #fdfdfd;
+    color: midnightblue;
+    border: 2px solid midnightblue;
+    padding: .3rem .6rem;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.4s;
+}
+
+button:hover {
+    background-color: midnightblue;
+    color: white;
+}
+
+button:hover > i {
+    color: white;
+}
+
+button > i {
+    color: midnightblue;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+input, select {
+    padding: 0.25rem 0.5rem;
+}
+
+.hide {
+    display: none;
+}
+
+.todo-container {
+    max-width: 450px;
+    margin: 3rem auto;
+    background-color: #fdfdfd;
+    padding: 0.5rem;
+    border-radius: 15px;
+}
+
+.todo-container header {
+    text-align: center;
+    padding: 1rem 1rem 1rem;
+    border-bottom: 1px solid #ccc;
+}
+
+/* ToDo Form */
+#todo-form, #edit-form {
+    padding: 1rem;
+    border-bottom: 1px solid #ccc;
+}
+
+#todo-form p, #edit-form p {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-control {
+    display: flex;
+}
+
+.form-control input {
+    margin-right: 0.3rem;
+}
+
+#cancel-edit-btn {
+    margin-top: 1rem;
+}
+
+/* ToDo toolbar */
+
+#toolbar {
+    padding: 1rem;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+}
+
+#toolbar h4 {
+    margin-bottom: 0.5rem;
+
+}
+
+#search {
+    border-right: 1px solid #ddd;
+    padding-right: 1rem;
+    margin-right: 1rem;
+    width: 65%;
+    display: flex;
+    flex-direction: column;
+}
+
+#search form {
+    display: flex;
+}
+
+#search input {
+    width: 100%;
+    margin-right: 0.3rem;
+}
+
+#filter {
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+}
+
+#filter select {
+    flex: 1;
+}
+
+/* ToDo List */
+
+.todo {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    transition: 0.3s;
+}
+
+.todo h3 {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.todo button {
+    margin-left: 0.4rem;
+}
+
+.done {
+    background-color: rgb(54, 54, 255);
+}
+
+.done h3 {
+    color: white;
+    text-decoration: line-through;
+
+}
+</style>
+<script>
+    // seleção de elementos (adição do filterSelect)
+const todoForm = document.querySelector("#todo-form");
+const todoInput = document.querySelector("#todo-input");
+const todoList = document.querySelector("#todo-list");
+const editForm = document.querySelector("#edit-form");
+const editInput = document.querySelector("#edit-input");
+const cancelEditBtn = document.querySelector("#cancel-edit-btn");
+const eraseBtn = document.querySelector("#erase-button");
+const searchInput = document.querySelector("#search-input");
+const filterSelect = document.querySelector("#filter-select");
+
+// função de filtro
+const filterTodos = (filter) => {
+    const todos = document.querySelectorAll(".todo");
+
+    todos.forEach((todo) => {
+        switch (filter) {
+            case "done":
+                if (todo.classList.contains("done")) {
+                    todo.style.display = "flex";
+                } else {
+                    todo.style.display = "none";
+                }
+                break;
+            case "todo":
+                if (!todo.classList.contains("done")) {
+                    todo.style.display = "flex";
+                } else {
+                    todo.style.display = "none";
+                }
+                break;
+            default:
+                todo.style.display = "flex";
+                break;
+        }
+    });
+};
+
+// eventos (adição do evento change no filterSelect)
+filterSelect.addEventListener("change", (e) => {
+    const filterValue = e.target.value;
+    filterTodos(filterValue);
+});
+
+// função de pesquisa modificada para incluir filtro
+const filterSearchTodos = (searchText) => {
+    const todos = document.querySelectorAll(".todo");
+    const filterValue = filterSelect.value;
+
+    todos.forEach((todo) => {
+        const todoTitle = todo.querySelector("h3").innerText.toLowerCase();
+        const matchesSearch = todoTitle.includes(searchText.toLowerCase());
+
+        let matchesFilter = false;
+        switch (filterValue) {
+            case "done":
+                matchesFilter = todo.classList.contains("done");
+                break;
+            case "todo":
+                matchesFilter = !todo.classList.contains("done");
+                break;
+            default:
+                matchesFilter = true;
+                break;
+        }
+
+        if (matchesSearch && matchesFilter) {
+            todo.style.display = "flex";
+        } else {
+            todo.style.display = "none";
+        }
+    });
+};
+
+// modificação do evento input no searchInput
+searchInput.addEventListener("input", (e) => {
+    const searchText = e.target.value;
+    filterSearchTodos(searchText);
+});
+
+// código existente...
+
+let oldInputValue;
+
+const saveTodo = (text) => {
+    const todo = document.createElement("div");
+    todo.classList.add("todo");
+
+    const todoTitle = document.createElement("h3");
+    todoTitle.innerText = text;
+    todo.appendChild(todoTitle);
+
+    const doneBtn = document.createElement("button");
+    doneBtn.classList.add("finish-todo");
+    doneBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    todo.appendChild(doneBtn);
+
+    const editBtn = document.createElement("button");
+    editBtn.classList.add("edit-todo");
+    editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    todo.appendChild(editBtn);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.classList.add("remove-todo");
+    deleteBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    todo.appendChild(deleteBtn);
+
+    todoList.appendChild(todo);
+    todoInput.value = "";
+    searchInput.value = "";
+    todoInput.focus();
+};
+
+const toggleForms = () => {
+    editForm.classList.toggle("hide");
+    todoForm.classList.toggle("hide");
+    todoList.classList.toggle("hide");
+};
+
+const updateTodo = (text) => {
+    const todos = document.querySelectorAll(".todo");
+
+    todos.forEach((todo) => {
+        let todoTitle = todo.querySelector("h3");
+
+        if (todoTitle.innerText === oldInputValue) {
+            todoTitle.innerText = text;
+        }
+    });
+};
+
+todoForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const inputValue = todoInput.value;
+
+    if (inputValue) {
+        saveTodo(inputValue);
+    }
+});
+
+document.addEventListener("click", (e) => {
+    const targetEl = e.target;
+    const parentEl = targetEl.closest("div");
+    let todoTitle;
+
+    if (parentEl && parentEl.querySelector("h3")) {
+        todoTitle = parentEl.querySelector("h3").innerText;
+    }
+
+    if (targetEl.classList.contains("finish-todo")) {
+        parentEl.classList.toggle("done");
+    }
+
+    if (targetEl.classList.contains("edit-todo")) {
+        toggleForms();
+        editInput.value = todoTitle;
+        oldInputValue = todoTitle;
+    }
+
+    if (targetEl.classList.contains("remove-todo")) {
+        parentEl.remove();
+    }
+});
+
+cancelEditBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    toggleForms();
+});
+
+eraseBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    searchInput.value = "";
+    filterSearchTodos("");
+});
+
+editForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const editInputValue = editInput.value;
+
+    if (editInputValue) {
+        updateTodo(editInputValue);
+    }
+
+    toggleForms();
+});
+
+</script>
+<body>
+    <div class="todo-container">
+        <header>
+            <h1>Lista de Afazeres</h1>
+        </header>
+        <form id="todo-form">
+            <p>Adicione a sua tarefa:</p>
+            <div class="form-control">
+                <input type="text" id="todo-input" placeholder="O que você vai fazer?">
+                <button type="submit">
+                    <i class="fa-thin fa-plus"></i>
+                </button>
+            </div>
+        </form>
+        <form id="edit-form" class="hide">
+            <p>Edite a sua tarefa:</p>
+            <div class="form-control">
+                <input type="text" id="edit-input">
+                <button type="submit">
+                    <i class="fa-solid fa-check"></i>
+                </button>
+            </div>
+            <button id="cancel-edit-btn">Cancelar</button>
+        </form>
+        <div id="toolbar">
+            <div id="search">
+                <h4>Pesquisar:</h4>
+                <form action="">
+                    <input type="text" id="search-input" placeholder="Buscar">
+                    <button id="erase-button">
+                        <i class="fa-solid fa-delete-left"></i>
+                    </button>
+                </form>
+            </div>
+            <div id="filter">
+                <h4>Filtrar:</h4>
+                <select id="filter-select">
+                    <option value="all">Todos</option>
+                    <option value="done">Feitos</option>
+                    <option value="todo">A Fazer</option>
+                </select>
+            </div>
+        </div>
+        <div id="todo-list">
+    
+        </div>
+    </div>
+</body>
+</html>
