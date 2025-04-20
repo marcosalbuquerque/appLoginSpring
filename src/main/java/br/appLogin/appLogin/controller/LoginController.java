@@ -27,21 +27,21 @@ public class LoginController {
         return "login";
     }
 
-    @GetMapping("/")
-    public String dashboard() {
-        return "index";
-    }
-
     @PostMapping("/logar")
     public String loginUsuario(Usuario usuario, Model model, HttpServletResponse response) {
         Usuario usuarioLogado = this.ur.login(usuario.getEmail(), usuario.getSenha());
 
         if (usuarioLogado != null) {
-            return "redirect:/index";
+            return "redirect:/todolist";
         }
 
         model.addAttribute("erro", "Usuário Inválido!");
         return "login";
+    }
+
+    @GetMapping("/todolist")
+    public String mostrarTodolist() {
+        return "todolist";  // nome do template correto
     }
 
     // Cadastro
